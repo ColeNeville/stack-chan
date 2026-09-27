@@ -1,0 +1,30 @@
+# Thistle keeper dev container — stack-chan firmware toolchain WITHOUT the lin simulator.
+# Upstream firmware/docker/Dockerfile (bookworm) dies two ways:
+#   1. x-lin simulator build: /lib/x86_64-linux-gnu/libm.so.6: GLIBC_2.38 not found
+#   2. Moddable's prebuilt `tools` binary (manifest compiler) ALSO requires
+#      GLIBC_2.38 — bookworm glibc 2.36 can't run it at all, so even a MOD-only
+#      build fails. Fix: base on Debian trixie (glibc 2.41). Simulator still
+#      skipped (slow, unneeded); ESP32 cross-builds compile from source.
+FROM node:22-trixie
+
+RUN npm install -g xs-dev
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends sudo python3-venv python3-pip git && \
+    apt-get clean && apt-get autoremove
+
+RUN echo "node ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+USER node
+ENV CI=true
+
+# Base Moddable SDK setup first (installs SDK + host tooling). The lin simulator
+# build inside it fails on bookworm glibc (needs 2.38) — tolerated here because
+# ESP32 cross-builds don't need the simulator.
+RUN xs-dev setup || echo "WARN: base setup failed (simulator glibc?) — continuing"
+# ESP32 device toolchain (needs the SDK from the step above).
+RUN xs-dev setup --device=esp32
+
+RUN echo ". /home/node/.local/share/xs-dev-export.sh" >> ~/.bashrc
+
+WORKDIR /workspace
