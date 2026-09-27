@@ -29,7 +29,7 @@ RUN xs-dev setup --device=esp32
 # (upstream CI does exactly this — see .github/actions/setup/action.yml).
 RUN sudo apt-get update && \
     sudo apt-get install -y --no-install-recommends cmake libfreetype6-dev && \
-    apt-get clean && sudo apt-get autoremove && \
+    sudo apt-get clean && sudo apt-get autoremove && \
     git clone --depth 1 https://github.com/vladimirgamalyan/fontbm.git /home/node/.local/share/fontbm && \
     cd /home/node/.local/share/fontbm && mkdir -p build && cd build && \
     cmake .. -DCMAKE_BUILD_TYPE=Release && make -j$(nproc) && \
