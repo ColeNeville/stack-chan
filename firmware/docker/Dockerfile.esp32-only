@@ -25,6 +25,16 @@ RUN xs-dev setup || echo "WARN: base setup failed (simulator glibc?) — continu
 # ESP32 device toolchain (needs the SDK from the step above).
 RUN xs-dev setup --device=esp32
 
+# fontbm: bitmap font compiler required by mcconfig for host/MOD builds
+# (upstream CI does exactly this — see .github/actions/setup/action.yml).
+RUN sudo apt-get update && \
+    sudo apt-get install -y --no-install-recommends cmake libfreetype6-dev && \
+    apt-get clean && sudo apt-get autoremove && \
+    git clone --depth 1 https://github.com/vladimirgamalyan/fontbm.git /home/node/.local/share/fontbm && \
+    cd /home/node/.local/share/fontbm && mkdir -p build && cd build && \
+    cmake .. -DCMAKE_BUILD_TYPE=Release && make -j$(nproc) && \
+    printf '\nexport FONTBM=%s\n' "/home/node/.local/share/fontbm/build/fontbm" >> /home/node/.local/share/xs-dev-export.sh
+
 RUN echo ". /home/node/.local/share/xs-dev-export.sh" >> ~/.bashrc
 
 WORKDIR /workspace
